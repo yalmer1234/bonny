@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Password Manager Pro+</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/brython@3.10/brython.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/brython@3.10/brython_stdlib.js"></script>
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --primary-hover: #5649c0;
+            --secondary-color: #00cec9;
+            --secondary-hover: #00a8a5;
+            --danger-color: #ff7675;
+            --danger-hover: #e84343;
+            --text-color: #2d3436;
+            --bg-color: #f9f9f9;
+            --container-bg: #ffffff;
+            --history-item-bg: #f1f3f6;
+            --border-color: #dfe6e9;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --success-color: #00b894;
+            --warning-color: #fdcb6e;
+            --base-font-size: 16px;
+            --border-radius: 12px;
+            --transition-speed: 0.25s;
+        }
+        
+        .dark-mode {
+            --primary-color: #a29bfe;
+            --primary-hover: #847ddf;
+            --secondary-color: #55efc4;
+            --secondary-hover: #00b894;
+            --danger-color: #ff7675;
+            --danger-hover: #e84343;
+            --text-color: #f5f6fa;
+            --bg-color: #1e272e;
+            --container-bg: #2f3640;
+            --history-item-bg: #353b48;
+            --border-color: #57606f;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --success-color: #55efc4;
+            --warning-color: #fdcb6e;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 30px 20px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            transition: all var(--transition-speed) ease;
+            line-height: 1.6;
+            font-size: var(--base-font-size);
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .container {
+            background: var(--container-bg);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            margin-top: 25px;
+            box-shadow: 0 8px 20px var(--shadow-color);
+            border: 1px solid var(--border-color);
+        }
+        
+        h1, h2, h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+            font-weight: 600;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        h2 {
+            font-size: 1.4rem;
+            margin-bottom: 1.2rem;
+        }
+        
+        h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+        }
+        
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 22px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            margin: 5px;
+            font-weight: 500;
+            transition: all var(--transition-speed);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        button.secondary {
+            background: var(--secondary-color);
+        }
+        
+        button.secondary:hover {
+            background: var(--secondary-hover);
+        }
+        
+        button.danger {
+            background: var(--danger-color);
+        }
+        
+        button.danger:hover {
+            background: var(--danger-hover);
+        }
+        
+        .password-strength {
+            height: 10px;
+            width: 100%;
+            margin: 15px 0;
+            border-radius: 5px;
+            transition: all var(--transition-speed);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .strength-weak { background: linear-gradient(to right, #ff7675, #e84343); width: 25%; }
+        .strength-medium { background: linear-gradient(to right, #fdcb6e, #e17055); width: 50%; }
+        .strength-strong { background: linear-gradient(to right, #00cec9, #0984e3); width: 75%; }
+        .strength-very-strong { background: linear-gradient(to right, #00b894, #00cec9); width: 100%; }
+        
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 15px;
+            background: var(--history-item-bg);
+            border-radius: var(--border-radius);
+            transition: all var(--transition-speed);
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .history-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 8px;
+            cursor: help;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 220px;
+            background: var(--container-bg);
+            color: var(--text-color);
+            text-align: center;
+            padding: 10px;
+            border-radius: var(--border-radius);
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity var(--transition-speed);
+            font-size: 0.9rem;
+            font-weight: normal;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            border: 1px solid var(--border-color);
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        input[type="text"], input[type="number"], input[type="password"] {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            box-sizing: border-box;
+            background: var(--container-bg);
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: all var(--transition-speed);
+        }
+        
+        input[type="text"]:focus, input[type="number"]:focus, input[type="password"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.2);
+        }
+        
+        input[type="checkbox"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+            transition: all var(--transition-speed);
+        }
+        
+        input[type="checkbox"]:checked {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        input[type="checkbox"]:checked::after {
+            content: "✓";
+            position: absolute;
+            color: white;
+            font-size: 12px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        label {
+            display: block;
+            margin: 12px 0;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .flex-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .password-display {
+            position: relative;
+            margin: 15px 0;
+        }
+        
+        .password-display input {
+            padding-right: 50px;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            letter-spacing: 1px;
+            font-size: 1.1rem;
+            background: var(--history-item-bg);
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            padding: 5px;
+            font-size: 1.2rem;
+            opacity: 0.7;
+            transition: all var(--transition-speed);
+        }
+        
+        .toggle-password:hover {
+            opacity: 1;
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .copy-message {
+            color: var(--success-color);
+            margin-left: 10px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity var(--transition-speed);
+            font-size: 0.9rem;
+        }
+        
+        .copy-message.show {
+            opacity: 1;
+        }
+        
+        .settings-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .settings-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .history-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        #login-container {
+            max-width: 450px;
+            margin: 80px auto;
+            text-align: center;
+        }
+        
+        #login-container h1 {
+            margin-bottom: 30px;
+        }
+        
+        #login-error {
+            color: var(--danger-color);
+            margin-top: 15px;
+            display: none;
+            font-weight: 500;
+            padding: 10px;
+            background: rgba(255, 118, 117, 0.1);
+            border-radius: var(--border-radius);
+        }
+        
+        #app-content {
+            display: none;
+        }
+        
+        #setup-container {
+            max-width: 450px;
+            margin: 80px auto;
+            text-align: center;
+            display: none;
+        }
+        
+        /* Nuevos estilos para el control de tamaño de fuente */
+        .font-size-controls {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .font-size-controls label {
+            margin: 0;
+            min-width: 110px;
+            font-weight: 500;
+        }
+        
+        .font-size-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--border-color);
+            outline: none;
+            cursor: pointer;
+        }
+        
+        .font-size-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+        
+        .font-size-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+        
+        .font-size-value {
+            min-width: 45px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .font-size-btn {
+            padding: 8px 12px !important;
+            min-width: 40px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        /* Mejoras para la cabecera */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        /* Efecto de carga */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .container {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 15px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .flex-row {
+                gap: 15px;
+            }
+            
+            button {
+                padding: 10px 18px;
+            }
+            
+            #login-container, #setup-container {
+                margin: 50px auto;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .app-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .font-size-controls {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .font-size-slider {
+                width: 100%;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+</head>
+<body onload="brython()">
+    <div id="login-container" class="container">
+        <h1>🔒 Password Manager Pro+</h1>
+        <div>
+            <label for="master-password">Contraseña maestra:</label>
+            <input type="password" id="master-password" placeholder="Ingresa tu contraseña maestra">
+            <button id="login-btn">Acceder</button>
+            <div id="login-error">Contraseña incorrecta. Intenta nuevamente.</div>
+        </div>
+    </div>
+
+    <div id="setup-container" class="container">
+        <h1>🔒 Configurar contraseña maestra</h1>
+        <div>
+            <label for="new-master-password">Nueva contraseña maestra:</label>
+            <input type="password" id="new-master-password" placeholder="Crea una contraseña maestra segura">
+            <label for="confirm-master-password">Confirmar contraseña:</label>
+            <input type="password" id="confirm-master-password" placeholder="Repite la contraseña">
+            <button id="setup-btn">Establecer contraseña</button>
+            <div id="setup-error" style="color: var(--danger-color); margin-top: 15px; display: none; padding: 10px; background: rgba(255, 118, 117, 0.1); border-radius: var(--border-radius);"></div>
+        </div>
+    </div>
+
+    <div id="app-content" class="container">
+        <div class="app-header">
+            <h1>🔒 Password Manager Pro+</h1>
+            <div class="header-actions">
+                <button id="dark-mode-toggle">🌓 Modo Oscuro</button>
+                <button id="logout-btn" class="danger">🔒 Cerrar sesión</button>
+            </div>
+        </div>
+        
+        <!-- Control de accesibilidad -->
+        <div class="settings-section">
+            <h3>Accesibilidad</h3>
+            <div class="font-size-controls">
+                <label for="font-size-slider">Tamaño de texto:</label>
+                <button id="font-size-decrease" class="font-size-btn" title="Disminuir tamaño">A-</button>
+                <input type="range" id="font-size-slider" class="font-size-slider" min="12" max="24" step="1" value="16">
+                <button id="font-size-increase" class="font-size-btn" title="Aumentar tamaño">A+</button>
+                <span id="font-size-value" class="font-size-value">16px</span>
+            </div>
+        </div>
+        
+        <!-- Configuración de contraseña -->
+        <div class="settings-section">
+            <h3>Configuración de la contraseña</h3>
+            
+            <div class="flex-row">
+                <div style="flex: 1;">
+                    <label for="length">Longitud:</label>
+                    <input type="number" id="length" value="16" min="8" max="64">
+                </div>
+                
+                <div class="tooltip">ℹ️
+                    <span class="tooltiptext">Recomendado: 12-16 caracteres. Mínimo 8 caracteres con al menos 4 tipos diferentes de caracteres para mayor seguridad.</span>
+                </div>
+            </div>
+            
+            <div class="flex-row">
+                <div>
+                    <label><input type="checkbox" id="uppercase" checked> Mayúsculas (A-Z)</label>
+                </div>
+                <div>
+                    <label><input type="checkbox" id="lowercase" checked> Minúsculas (a-z)</label>
+                </div>
+                <div>
+                    <label><input type="checkbox" id="numbers" checked> Números (0-9)</label>
+                </div>
+                <div>
+                    <label><input type="checkbox" id="symbols" checked> Símbolos</label>
+                </div>
+            </div>
+            
+            <div>
+                <label for="custom-symbols">Símbolos personalizados:</label>
+                <input type="text" id="custom-symbols" placeholder="Ej: !@#$%^&*">
+            </div>
+            
+            <div>
+                <label><input type="checkbox" id="exclude-similar" checked> Excluir caracteres similares (1, l, I, 0, O, etc.)</label>
+            </div>
+            
+            <button id="generate" class="secondary">🔑 Generar Contraseña</button>
+        </div>
+        
+        <!-- Contraseña generada -->
+        <div class="settings-section">
+            <h3>Contraseña generada</h3>
+            <div class="password-strength" id="strength-bar"></div>
+            
+            <div class="password-display">
+                <input type="password" id="password" readonly style="width: 100%; font-size: 1.1rem;">
+                <button class="toggle-password" id="toggle-password">👁️</button>
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <button id="copy">📋 Copiar</button>
+                <button id="save" class="secondary">💾 Guardar</button>
+                <span id="copy-message" class="copy-message">✓ Copiado al portapapeles!</span>
+            </div>
+        </div>
+        
+        <!-- Historial de contraseñas -->
+        <div>
+            <h3>Historial de contraseñas</h3>
+            <div id="password-history"></div>
+            
+            <div class="history-actions">
+                <button id="export" class="secondary">📤 Exportar a TXT</button>
+                <button id="clear-history" class="danger">🗑️ Limpiar historial</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/python">
+        from browser import document, alert, window, html
+        import random
+        import string
+        import time
+        from datetime import datetime
+        import hashlib
+
+        # Configuración de seguridad
+        MASTER_PASSWORD_KEY = "master_password_hash"
+        SESSION_TIMEOUT = 30 * 60  # 30 minutos en segundos
+
+        # Variables de estado
+        history = []
+        MAX_HISTORY = 10
+        SIMILAR_CHARS = "1lI0Oo"
+        last_activity = 0
+        session_active = False
+
+        # Elementos del DOM
+        login_container = document["login-container"]
+        setup_container = document["setup-container"]
+        app_content = document["app-content"]
+        master_password_input = document["master-password"]
+        login_btn = document["login-btn"]
+        login_error = document["login-error"]
+        logout_btn = document["logout-btn"]
+        new_master_password_input = document["new-master-password"]
+        confirm_master_password_input = document["confirm-master-password"]
+        setup_btn = document["setup-btn"]
+        setup_error = document["setup-error"]
+
+        # Funciones de seguridad
+        def hash_password(password):
+            return hashlib.sha256(password.encode()).hexdigest()
+
+        def get_master_password_hash():
+            return window.localStorage.getItem(MASTER_PASSWORD_KEY)
+
+        def set_master_password_hash(password_hash):
+            window.localStorage.setItem(MASTER_PASSWORD_KEY, password_hash)
+
+        def check_master_password(password):
+            stored_hash = get_master_password_hash()
+            return stored_hash and hash_password(password) == stored_hash
+
+        def start_session():
+            global session_active, last_activity
+            session_active = True
+            last_activity = time.time()
+            login_container.style.display = "none"
+            setup_container.style.display = "none"
+            app_content.style.display = "block"
+            # Iniciar temporizador de inactividad
+            window.setInterval(check_session_timeout, 1000)
+
+        def end_session():
+            global session_active
+            session_active = False
+            master_password_input.value = ""
+            login_container.style.display = "none"
+            setup_container.style.display = "none"
+            app_content.style.display = "none"
+            login_error.style.display = "none"
+
+        def check_session_timeout():
+            global last_activity
+            if session_active and (time.time() - last_activity) > SESSION_TIMEOUT:
+                alert("Tu sesión ha expirado por inactividad")
+                end_session()
+
+        def update_activity():
+            global last_activity
+            last_activity = time.time()
+
+        # Funciones de la aplicación
+        def update_strength_indicator(password):
+            strength_bar = document["strength-bar"]
+            length = len(password)
+            complexity = 0
+            
+            # Check for character types
+            if any(c in string.ascii_uppercase for c in password): complexity += 1
+            if any(c in string.ascii_lowercase for c in password): complexity += 1
+            if any(c in string.digits for c in password): complexity += 1
+            if any(c in (document["custom-symbols"].value or string.punctuation) for c in password): complexity += 1
+            
+            # Calculate score based on length and complexity
+            score = (length * complexity) + (length * 0.5) + (complexity * 5)
+            
+            strength_bar.className = "password-strength "
+            if score < 40:
+                strength_bar.className += "strength-weak"
+            elif score < 70:
+                strength_bar.className += "strength-medium"
+            elif score < 100:
+                strength_bar.className += "strength-strong"
+            else:
+                strength_bar.className += "strength-very-strong"
+
+        def generate_password(event=None):
+            try:
+                update_activity()
+                length = int(document["length"].value)
+                use_upper = document["uppercase"].checked
+                use_lower = document["lowercase"].checked
+                use_numbers = document["numbers"].checked
+                use_symbols = document["symbols"].checked
+                custom_symbols = document["custom-symbols"].value
+                exclude_similar = document["exclude-similar"].checked
+                
+                # Validate inputs
+                selected_types = sum([use_upper, use_lower, use_numbers, use_symbols])
+                if selected_types == 0:
+                    alert("Error: Debes seleccionar al menos un tipo de carácter")
+                    return
+                
+                if length < 8:
+                    alert("Error: La longitud mínima es 8 caracteres")
+                    return
+                
+                if length < selected_types:
+                    alert(f"Error: La longitud debe ser al menos {selected_types} para incluir todos los tipos seleccionados")
+                    return
+
+                # Build character pool
+                chars = []
+                if use_upper: 
+                    upper = string.ascii_uppercase
+                    if exclude_similar:
+                        upper = ''.join(c for c in upper if c not in SIMILAR_CHARS)
+                    chars.extend(upper)
+                    
+                if use_lower: 
+                    lower = string.ascii_lowercase
+                    if exclude_similar:
+                        lower = ''.join(c for c in lower if c not in SIMILAR_CHARS)
+                    chars.extend(lower)
+                    
+                if use_numbers: 
+                    numbers = string.digits
+                    if exclude_similar:
+                        numbers = ''.join(c for c in numbers if c not in SIMILAR_CHARS)
+                    chars.extend(numbers)
+                    
+                if use_symbols: 
+                    syms = custom_symbols if custom_symbols else string.punctuation
+                    chars.extend(syms)
+
+                # Ensure we have at least one of each selected type
+                password = []
+                if use_upper: password.append(random.choice(string.ascii_uppercase))
+                if use_lower: password.append(random.choice(string.ascii_lowercase))
+                if use_numbers: password.append(random.choice(string.digits))
+                if use_symbols: 
+                    syms = custom_symbols if custom_symbols else string.punctuation
+                    if syms: password.append(random.choice(syms))
+
+                # Fill the rest of the password
+                remaining_length = length - len(password)
+                for _ in range(remaining_length):
+                    password.append(random.choice(chars))
+                
+                # Shuffle and create final password
+                random.shuffle(password)
+                password = ''.join(password)
+                
+                # Update UI
+                document["password"].value = password
+                update_strength_indicator(password)
+                update_history(password)
+                
+            except Exception as e:
+                alert(f"Error al generar la contraseña: {str(e)}")
+
+        def copy_password(event):
+            update_activity()
+            pwd = document["password"].value
+            if not pwd:
+                alert("Primero genera una contraseña")
+                return
+                
+            # Create temporary element to copy text
+            temp = document.createElement("textarea")
+            temp.value = pwd
+            document.body <= temp
+            temp.select()
+            document.execCommand("copy")
+            temp.remove()
+            
+            # Show copy confirmation
+            copy_message = document["copy-message"]
+            copy_message.textContent = "✓ Copiado al portapapeles!"
+            copy_message.classList.add("show")
+            window.setTimeout(lambda: copy_message.classList.remove("show"), 2000)
+
+        def save_password(event):
+            update_activity()
+            pwd = document["password"].value
+            if not pwd:
+                alert("Primero genera una contraseña")
+                return
+                
+            update_history(pwd)
+            document["copy-message"].textContent = "✓ Guardado en historial!"
+            document["copy-message"].classList.add("show")
+            window.setTimeout(lambda: document["copy-message"].classList.remove("show"), 2000)
+
+        def update_history(password):
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            history.insert(0, (password, timestamp))
+            
+            # Limit history size
+            if len(history) > MAX_HISTORY:
+                history.pop()
+                
+            # Update history display
+            history_div = document["password-history"]
+            history_div.clear()
+            
+            for pwd, time in history:
+                item = html.DIV(Class="history-item")
+                password_span = html.SPAN(f"{pwd} ", Class="password-text")
+                time_span = html.SPAN(time, Class="time-text", style={"color": "#888", "font-size": "0.9em"})
+                copy_btn = html.BUTTON("📋", Class="history-copy")
+                
+                copy_btn.bind("click", lambda e, p=pwd: [setattr(document["password"], "value", p), update_strength_indicator(p), copy_password(None)])
+                
+                item <= password_span
+                item <= time_span
+                item <= copy_btn
+                history_div <= item
+
+        def export_history(event):
+            update_activity()
+            if not history:
+                alert("El historial está vacío")
+                return
+                
+            # Format history with timestamps
+            content = "Historial de contraseñas:\n\n"
+            content += "\n".join([f"{pwd} - Generada el {time}" for pwd, time in history])
+            
+            # Create and trigger download
+            blob = window.Blob.new([content], {type: "text/plain;charset=utf-8"})
+            url = window.URL.createObjectURL(blob)
+            link = document.createElement("a")
+            link.href = url
+            link.download = f"passwords_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            link.click()
+            window.URL.revokeObjectURL(url)
+
+        def clear_history(event):
+            update_activity()
+            if not history:
+                alert("El historial ya está vacío")
+                return
+                
+            if window.confirm("¿Estás seguro de que quieres borrar todo el historial?"):
+                history.clear()
+                document["password-history"].clear()
+
+        def toggle_password_visibility(event):
+            update_activity()
+            pwd_input = document["password"]
+            if pwd_input.type == "password":
+                pwd_input.type = "text"
+                document["toggle-password"].textContent = "👁️‍🗨"
+            else:
+                pwd_input.type = "password"
+                document["toggle-password"].textContent = "👁️"
+
+        def toggle_dark_mode(event):
+            update_activity()
+            document.body.classList.toggle("dark-mode")
+            # Save preference to localStorage
+            is_dark = document.body.classList.contains("dark-mode")
+            window.localStorage.setItem("darkMode", str(is_dark))
+
+        # Nueva función para ajustar el tamaño de la fuente
+        def adjust_font_size(size):
+            document.body.style.fontSize = f"{size}px"
+            document["font-size-value"].textContent = f"{size}px"
+            document["font-size-slider"].value = size
+            window.localStorage.setItem("fontSize", str(size))
+
+        # Nueva función para manejar el cambio de tamaño
+        def handle_font_size_change(event=None):
+            size = int(document["font-size-slider"].value)
+            adjust_font_size(size)
+
+        # Nueva función para aumentar/disminuir tamaño
+        def change_font_size(delta):
+            current_size = int(document.body.style.fontSize or "16")
+            new_size = max(12, min(24, current_size + delta))
+            adjust_font_size(new_size)
+
+        # Modificación de init_dark_mode para incluir tamaño de fuente
+        def init_ui_preferences():
+            # Dark mode
+            dark_mode = window.localStorage.getItem("darkMode") == "true"
+            if dark_mode:
+                document.body.classList.add("dark-mode")
+            
+            # Font size
+            saved_size = window.localStorage.getItem("fontSize")
+            if saved_size:
+                adjust_font_size(int(saved_size))
+            else:
+                adjust_font_size(16)
+
+        # Funciones de autenticación
+        def handle_login(event):
+            password = master_password_input.value
+            if not password:
+                login_error.textContent = "Por favor ingresa una contraseña"
+                login_error.style.display = "block"
+                return
+                
+            if check_master_password(password):
+                start_session()
+            else:
+                login_error.textContent = "Contraseña incorrecta. Intenta nuevamente."
+                login_error.style.display = "block"
+                master_password_input.value = ""
+
+        def handle_setup(event):
+            new_password = new_master_password_input.value
+            confirm_password = confirm_master_password_input.value
+            
+            if not new_password or not confirm_password:
+                setup_error.textContent = "Por favor completa ambos campos"
+                setup_error.style.display = "block"
+                return
+                
+            if new_password != confirm_password:
+                setup_error.textContent = "Las contraseñas no coinciden"
+                setup_error.style.display = "block"
+                return
+                
+            if len(new_password) < 8:
+                setup_error.textContent = "La contraseña debe tener al menos 8 caracteres"
+                setup_error.style.display = "block"
+                return
+                
+            # Set the new master password
+            set_master_password_hash(hash_password(new_password))
+            setup_error.style.display = "none"
+            new_master_password_input.value = ""
+            confirm_master_password_input.value = ""
+            
+            # Show login screen
+            setup_container.style.display = "none"
+            login_container.style.display = "block"
+            alert("Contraseña maestra establecida correctamente. Ahora puedes iniciar sesión.")
+
+        def handle_logout(event):
+            if window.confirm("¿Estás seguro de que quieres cerrar sesión?"):
+                end_session()
+
+        # Set up event listeners
+        def setup_event_listeners():
+            # Authentication
+            login_btn.bind("click", handle_login)
+            master_password_input.bind("keypress", lambda e: handle_login() if e.key == "Enter" else None)
+            logout_btn.bind("click", handle_logout)
+            setup_btn.bind("click", handle_setup)
+            
+            # App functionality
+            document["generate"].bind("click", generate_password)
+            document["copy"].bind("click", copy_password)
+            document["save"].bind("click", save_password)
+            document["export"].bind("click", export_history)
+            document["clear-history"].bind("click", clear_history)
+            document["toggle-password"].bind("click", toggle_password_visibility)
+            document["dark-mode-toggle"].bind("click", toggle_dark_mode)
+            
+            # Generate password on Enter key in length field
+            document["length"].bind("keypress", lambda e: generate_password() if e.key == "Enter" else None)
+            
+            # Nuevos listeners para controles de tamaño de fuente
+            document["font-size-slider"].bind("input", handle_font_size_change)
+            document["font-size-increase"].bind("click", lambda e: change_font_size(1))
+            document["font-size-decrease"].bind("click", lambda e: change_font_size(-1))
+
+        # Initialize the app
+        def init_app():
+            init_ui_preferences()
+            setup_event_listeners()
+            
+            # Check if master password is set
+            if not get_master_password_hash()):
+                # Show setup screen for first-time users
+                login_container.style.display = "none"
+                setup_container.style.display = "block"
+                app_content.style.display = "none"
+            else:
+                # Show login screen for returning users
+                end_session()
+
+        # Run the initialization when the page loads
+        init_app()
+    </script>
+</body>
+</html>
